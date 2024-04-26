@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from 'canvas'; // untuk mengubah ukuran gambar dan mengambil gambar
 import swal from 'sweetalert';
 
 const ResizeImage = () => {
@@ -9,16 +9,36 @@ const ResizeImage = () => {
     const [previewImage, setPreviewImage] = useState(null);
     const [loading, setLoading] = useState(false);
     const [resizing, setResizing] = useState(false);
+    const [fileName, setFileName] = useState('');
+    const extension = 'png';
+    const [height, setHeight] = useState(0);
+    const [width, setWidth] = useState(0);
 
     const onDrop = (acceptedFiles) => {
-        if (!acceptedFiles[0]) {
+        console.log("Ukuran File:", acceptedFiles[0].size); // Log ukuran file
+        if (acceptedFiles[0].type !== 'image/jpeg' && acceptedFiles[0].type !== 'image/png') {
             swal("File Error", "Format file tidak sesuai. Hanya file dengan format PNG atau JPG yang diizinkan.", "error");
             return;
         }
+
+        // Set nama file, file terpilih, dan gambar yang diunggah sebagai preview
+        setFileName(acceptedFiles[0].name);
         setSelectedFile(acceptedFiles[0]);
         setResizedImage(null);
-        setPreviewImage(URL.createObjectURL(acceptedFiles[0])); // Menampilkan gambar yang dipilih sebagai preview
+        setPreviewImage(URL.createObjectURL(acceptedFiles[0]));
+
+        // Membuat objek Image baru
+        const img = new Image();
+
+        img.onload = function () {
+            setWidth(img.width);
+            setHeight(img.height);
+        };
+
+        // Mengatur sumber gambar ke URL gambar yang diunggah
+        img.src = URL.createObjectURL(acceptedFiles[0]);
     };
+
 
     const handleResize = async () => {
         if (!selectedFile) {
@@ -29,15 +49,16 @@ const ResizeImage = () => {
         setResizing(true);
 
         try {
-            const canvas = createCanvas(200, 200);
+            const canvas = createCanvas(width, height); // widt height
             const ctx = canvas.getContext('2d');
 
             const img = await loadImage(URL.createObjectURL(selectedFile));
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            const resizedImageUrl = canvas.toDataURL('image/jpeg', 0.8);
+            const resizedImageUrl = canvas.toDataURL(`image/${extension}`, 1); // ada 2 parameter pada DataToUrl, parameter 1 menentukan jenis extension, parameter 2 menentukan tingkat kompresi antara 0
 
             setResizedImage(resizedImageUrl);
+            console.log(resizedImageUrl);
         } catch (error) {
             console.error('Error resizing image:', error);
             swal("Error", "Terjadi kesalahan saat mengunggah file.", "error");
@@ -50,7 +71,7 @@ const ResizeImage = () => {
         if (resizedImage) {
             const downloadLink = document.createElement('a');
             downloadLink.href = resizedImage;
-            downloadLink.download = 'resized_image.jpg'; // Nama file saat diunduh
+            downloadLink.download = `resized_${fileName}_by_mkp.${extension}`; // Nama file saat diunduh
             downloadLink.click();
         }
     };
