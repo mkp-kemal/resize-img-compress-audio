@@ -7,15 +7,13 @@ const ResizeImage = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [resizedImage, setResizedImage] = useState(null);
     const [previewImage, setPreviewImage] = useState(null);
-    const [loading, setLoading] = useState(false);
     const [resizing, setResizing] = useState(false);
     const [fileName, setFileName] = useState('');
     const extension = 'png';
-    const [height, setHeight] = useState(0);
-    const [width, setWidth] = useState(0);
+    const [inputWidth, setInputWidth] = useState('');
+    const [inputHeight, setInputHeight] = useState('');
 
     const onDrop = (acceptedFiles) => {
-        console.log("Ukuran File:", acceptedFiles[0].size); // Log ukuran file
         if (acceptedFiles[0].type !== 'image/jpeg' && acceptedFiles[0].type !== 'image/png') {
             swal("File Error", "Format file tidak sesuai. Hanya file dengan format PNG atau JPG yang diizinkan.", "error");
             return;
@@ -27,18 +25,7 @@ const ResizeImage = () => {
         setResizedImage(null);
         setPreviewImage(URL.createObjectURL(acceptedFiles[0]));
 
-        // Membuat objek Image baru
-        const img = new Image();
-
-        img.onload = function () {
-            setWidth(img.width);
-            setHeight(img.height);
-        };
-
-        // Mengatur sumber gambar ke URL gambar yang diunggah
-        img.src = URL.createObjectURL(acceptedFiles[0]);
     };
-
 
     const handleResize = async () => {
         if (!selectedFile) {
@@ -46,21 +33,29 @@ const ResizeImage = () => {
             return;
         }
 
+        // Konversi input lebar dan tinggi ke tipe data integer
+        const targetWidth = parseInt(inputWidth);
+        const targetHeight = parseInt(inputHeight);
+
+        if (isNaN(targetWidth) || isNaN(targetHeight) || targetWidth <= 0 || targetHeight <= 0) {
+            swal("Error", "Masukkan lebar dan tinggi yang valid.", "error");
+            return;
+        }
+
         setResizing(true);
 
         try {
-            const canvas = createCanvas(width, height); // widt height
+            const canvas = createCanvas(targetWidth, targetHeight);
             const ctx = canvas.getContext('2d');
 
             const img = await loadImage(URL.createObjectURL(selectedFile));
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            const resizedImageUrl = canvas.toDataURL(`image/${extension}`, 1); // ada 2 parameter pada DataToUrl, parameter 1 menentukan jenis extension, parameter 2 menentukan tingkat kompresi antara 0
+            const resizedImageUrl = canvas.toDataURL(`image/${extension}`, 0.1);
 
             setResizedImage(resizedImageUrl);
             console.log(resizedImageUrl);
         } catch (error) {
-            console.error('Error resizing image:', error);
             swal("Error", "Terjadi kesalahan saat mengunggah file.", "error");
         } finally {
             setResizing(false);
@@ -90,10 +85,19 @@ const ResizeImage = () => {
                 {!previewImage && <p style={{ margin: 0 }}>Drag and drop some files here, or click to select files</p>}
             </div>
 
+
+
+
             {selectedFile && (
-                <button style={{ display: 'block', margin: '0 auto', padding: '10px 20px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={handleResize} disabled={!selectedFile || loading}>
-                    {resizing ? 'Resizing...' : 'Resize'}
-                </button>
+                <>
+                    <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <input type="number" min={0} placeholder='Tinggi' value={inputHeight} onChange={(e) => setInputHeight(e.target.value)} style={{ marginRight: '20px', width: '50px', padding: '5px', borderRadius: '3px', border: '1px solid #ccc', backgroundColor: '#f9f9f9' }} />
+                        <input type="number" min={0} placeholder='Lebar' value={inputWidth} onChange={(e) => setInputWidth(e.target.value)} style={{ width: '50px', padding: '5px', borderRadius: '3px', border: '1px solid #ccc', backgroundColor: '#f9f9f9' }} />
+                    </div>
+                    <button style={{ display: 'block', margin: '0 auto', padding: '10px 20px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={handleResize} disabled={!selectedFile}>
+                        {resizing ? 'Resizing...' : 'Resize'}
+                    </button>
+                </>
             )}
 
             {resizedImage && (

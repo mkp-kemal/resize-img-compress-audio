@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Dropzone from 'react-dropzone';
 import swal from 'sweetalert';
-import ffmpeg from 'ffmpeg.js/ffmpeg-mp4.js'; // Import ffmpeg.js library
+import ffmpeg from 'ffmpeg.js/ffmpeg-mp4.js'; // untuk mengubah ukuran audio dan mengambil audio
 
 const AudioProcessor = () => {
     const [compressedFile, setCompressedFile] = useState(null);
